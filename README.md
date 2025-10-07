@@ -1,5 +1,5 @@
 # SubTracker
-
+This is a Cloud Computing project. 
 SubTracker is a web application for tracking subscriptions. It consists of a **frontend** and **backend**.
 
 ---
