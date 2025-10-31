@@ -1,69 +1,83 @@
-const express = require('express');
+// backend/routes/subscriptions.js
+const express = require("express");
 const router = express.Router();
-const mongoose = require('mongoose');
+const crypto = require("crypto");
+const Subscription = require("../models/Subscriptions"); 
+const auth = require("../middleware/auth");
 
-// Schema
-const subscriptionSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  amount: { type: Number, required: true },
-  dueDate: { type: Date, required: true },
-  billingCycle: { type: String, default: 'monthly' },
-  notes: { type: String }
-});
+const ALGORITHM = "aes-256-cbc";
+const SECRET_KEY = crypto
+  .createHash("sha256")
+  .update(process.env.ENCRYPTION_KEY || "fallback_secret_key_123456")
+  .digest();
+const IV = Buffer.alloc(16, 0); 
 
-const Subscription = mongoose.model('Subscription', subscriptionSchema);
+//  Encrypt helper
+function encrypt(text) {
+  if (!text) return "";
+  const cipher = crypto.createCipheriv(ALGORITHM, SECRET_KEY, IV);
+  let encrypted = cipher.update(text, "utf8", "hex");
+  encrypted += cipher.final("hex");
+  return encrypted;
+}
 
-// GET meth
-router.get('/', async (req, res) => {
+//  Decrypt helper
+function decrypt(encryptedText) {
+  if (!encryptedText) return "";
+  const decipher = crypto.createDecipheriv(ALGORITHM, SECRET_KEY, IV);
+  let decrypted = decipher.update(encryptedText, "hex", "utf8");
+  decrypted += decipher.final("utf8");
+  return decrypted;
+}
+
+//  Add new subscription
+router.post("/", auth, async (req, res) => {
   try {
-    const subs = await Subscription.find().sort({ dueDate: 1 });
-    res.json(subs);
-  } catch (err) {
-    console.error('GET /subscriptions error:', err);
-    res.status(500).json({ error: 'Failed to fetch subscriptions' });
-  }
-});
+    console.log("📩 Incoming subscription data:", req.body);
+    const { name, amount, dueDate, billingCycle, notes, username, password } = req.body;
 
-// POST metho
-router.post('/', async (req, res) => {
-  try {
-    const { name, amount, dueDate, billingCycle, notes } = req.body;
+    if (!name || !amount || !dueDate)
+      return res.status(400).json({ message: "Name, amount, and due date are required" });
 
-    if (!name || !amount || !dueDate) {
-      return res.status(400).json({ error: 'Name, amount, and dueDate are required' });
-    }
+    const encryptedUsername = username ? encrypt(username) : "";
+    const encryptedPassword = password ? encrypt(password) : "";
 
-    const sub = new Subscription({
+    const newSub = new Subscription({
+      userId: req.user.id, 
       name,
-      amount: parseFloat(amount),
-      dueDate: new Date(dueDate),
-      billingCycle: billingCycle || 'monthly',
-      notes
+      amount,
+      dueDate,
+      billingCycle,
+      notes,
+      username: encryptedUsername,
+      password: encryptedPassword,
     });
 
-    const saved = await sub.save();
-    res.status(201).json(saved);
+    await newSub.save();
+    console.log(" Subscription saved:", newSub);
+
+    res.status(201).json({ message: "Subscription added successfully", subscription: newSub });
   } catch (err) {
-    console.error('POST /subscriptions error:', err);
-    res.status(500).json({ error: 'Failed to create subscription' });
+    console.error(" Error adding subscription:", err);
+    res.status(500).json({ message: "Server error while adding subscription" });
   }
 });
 
-// DELETE meth
-router.delete('/:id', async (req, res) => {
+//  Get all subscriptions for logged-in user
+router.get("/", auth, async (req, res) => {
   try {
-    const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ error: 'Invalid subscription ID' });
-    }
+    const subs = await Subscription.find({ userId: req.user.id });
 
-    const deleted = await Subscription.findByIdAndDelete(id);
-    if (!deleted) return res.status(404).json({ error: 'Subscription not found' });
+    const decryptedSubs = subs.map((sub) => ({
+      ...sub._doc,
+      username: sub.username ? decrypt(sub.username) : "",
+      password: sub.password ? decrypt(sub.password) : "",
+    }));
 
-    res.json({ message: 'Subscription deleted successfully' });
+    res.json(decryptedSubs);
   } catch (err) {
-    console.error('DELETE /subscriptions/:id error:', err);
-    res.status(500).json({ error: 'Failed to delete subscription' });
+    console.error(" Get subscriptions error:", err);
+    res.status(500).json({ message: "Error fetching subscriptions" });
   }
 });
 

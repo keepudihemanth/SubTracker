@@ -1,81 +1,135 @@
-import { useState } from "react";
-import { createSubscription } from "../api/subscriptions";
-import "./SubscriptionForm.css"; // ✅ new CSS file
+// src/components/SubscriptionForm.jsx
+import React, { useState } from "react";
 
-export default function SubscriptionForm({ onAdded }) {
-  const [name, setName] = useState("");
-  const [amount, setAmount] = useState("");
-  const [billingCycle, setBillingCycle] = useState("monthly");
-  const [dueDate, setDueDate] = useState("");
-  const [notes, setNotes] = useState("");
+export default function SubscriptionForm({ onAdd }) {
+  const [formData, setFormData] = useState({
+    name: "",
+    amount: "",
+    dueDate: "",
+    billingCycle: "monthly",
+    notes: "",
+    username: "",
+    password: "",
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !amount || !dueDate) return;
 
-    const newSub = {
-      name,
-      amount: parseFloat(amount),
-      billingCycle,
-      dueDate,
-      notes,
-    };
+    const token = localStorage.getItem("token");
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!token || !user?._id) {
+      alert("❌ Please login before adding a subscription!");
+      return;
+    }
 
     try {
-      const createdSub = await createSubscription(newSub);
+      const res = await fetch("http://localhost:5000/api/subscriptions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          ...formData,
+          userId: user._id, // ✅ send userId to backend
+        }),
+      });
 
-      if (onAdded) {
-        onAdded({ ...createdSub, dueDate: new Date(createdSub.dueDate) });
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error("❌ Add subscription error:", data);
+        alert(`❌ Failed to add subscription: ${data.message || "Unknown error"}`);
+        return;
       }
 
+      alert("✅ Subscription added successfully!");
+      onAdd && onAdd(data);
+
       // Reset form
-      setName("");
-      setAmount("");
-      setBillingCycle("monthly");
-      setDueDate("");
-      setNotes("");
+      setFormData({
+        name: "",
+        amount: "",
+        dueDate: "",
+        billingCycle: "monthly",
+        notes: "",
+        username: "",
+        password: "",
+      });
     } catch (err) {
-      console.error(err);
-      alert("Failed to add subscription");
+      console.error("Network or server error:", err);
+      alert("⚠️ Could not connect to the backend server.");
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="subscription-form">
-      <h2>Add a New Subscription</h2>
+      <h2>Add New Subscription</h2>
+
       <input
         type="text"
-        placeholder="Subscription Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
+        name="name"
+        placeholder="Service Name"
+        value={formData.name}
+        onChange={handleChange}
         required
       />
+
       <input
         type="number"
-        placeholder="Amount ($)"
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
+        name="amount"
+        placeholder="Amount"
+        value={formData.amount}
+        onChange={handleChange}
         required
       />
+
+      <input
+        type="date"
+        name="dueDate"
+        value={formData.dueDate}
+        onChange={handleChange}
+        required
+      />
+
       <select
-        value={billingCycle}
-        onChange={(e) => setBillingCycle(e.target.value)}
+        name="billingCycle"
+        value={formData.billingCycle}
+        onChange={handleChange}
       >
         <option value="monthly">Monthly</option>
         <option value="yearly">Yearly</option>
       </select>
+
       <input
-        type="date"
-        value={dueDate}
-        onChange={(e) => setDueDate(e.target.value)}
-        required
+        type="text"
+        name="username"
+        placeholder="Username (optional)"
+        value={formData.username}
+        onChange={handleChange}
       />
+
+      <input
+        type="password"
+        name="password"
+        placeholder="Password (optional)"
+        value={formData.password}
+        onChange={handleChange}
+      />
+
       <textarea
+        name="notes"
         placeholder="Notes"
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
+        value={formData.notes}
+        onChange={handleChange}
       />
-      <button type="submit">+ Add Subscription</button>
+
+      <button type="submit">Add Subscription</button>
     </form>
   );
 }

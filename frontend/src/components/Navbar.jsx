@@ -1,6 +1,6 @@
 import React from "react";
 
-export default function Navbar({ onStartNow, goHome, goAbout }) {
+export default function Navbar({ onStartNow, goHome, goAbout, goAuth, user, onLogout }) {
   return (
     <nav className="navbar">
       <div className="logo">
@@ -8,13 +8,23 @@ export default function Navbar({ onStartNow, goHome, goAbout }) {
           SubTracker
         </a>
       </div>
+
       <ul>
-        
         <li>
-          <a href="#about" onClick={(e) => { e.preventDefault(); goAbout(); }}>About</a>
+          <a href="#about" onClick={(e) => { e.preventDefault(); goAbout(); }}>
+            About
+          </a>
         </li>
       </ul>
-      <button onClick={onStartNow}>Start Now</button>
+
+      {user ? (
+        <>
+          <button onClick={onStartNow}>Dashboard</button>
+          <button onClick={onLogout}>Logout</button>
+        </>
+      ) : (
+        <button onClick={goAuth}>Login / Register</button>
+      )}
     </nav>
   );
 }
