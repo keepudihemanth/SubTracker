@@ -1,83 +1,95 @@
-// backend/routes/subscriptions.js
-const express = require("express");
+const express = require('express');
 const router = express.Router();
-const crypto = require("crypto");
-const Subscription = require("../models/Subscriptions"); 
-const auth = require("../middleware/auth");
+const crypto = require('crypto');
+const Subscription = require('../models/Subscriptions');
+const auth = require('../middleware/auth');
 
-const ALGORITHM = "aes-256-cbc";
-const SECRET_KEY = crypto
-  .createHash("sha256")
-  .update(process.env.ENCRYPTION_KEY || "fallback_secret_key_123456")
-  .digest();
-const IV = Buffer.alloc(16, 0); 
+const ALGORITHM = 'ADD YOUR ALGORITHM HERE !!';
+const KEY = Buffer.from(process.env.ENCRYPTION_KEY || 'ADD YOUR KEY HERE !!', 'utf8');
+const IV = Buffer.from(process.env.IV || 'ADD YOUR IV HERE !!', 'utf8');
 
-//  Encrypt helper
 function encrypt(text) {
-  if (!text) return "";
-  const cipher = crypto.createCipheriv(ALGORITHM, SECRET_KEY, IV);
-  let encrypted = cipher.update(text, "utf8", "hex");
-  encrypted += cipher.final("hex");
-  return encrypted;
+  if (!text) return '';
+  const cipher = crypto.createCipheriv(ALGORITHM, KEY, IV);
+  let out = cipher.update(text, 'utf8', 'hex');
+  out += cipher.final('hex');
+  return out;
 }
-
-//  Decrypt helper
-function decrypt(encryptedText) {
-  if (!encryptedText) return "";
-  const decipher = crypto.createDecipheriv(ALGORITHM, SECRET_KEY, IV);
-  let decrypted = decipher.update(encryptedText, "hex", "utf8");
-  decrypted += decipher.final("utf8");
-  return decrypted;
-}
-
-//  Add new subscription
-router.post("/", auth, async (req, res) => {
+function decrypt(hex) {
+  if (!hex) return '';
   try {
-    console.log("📩 Incoming subscription data:", req.body);
+    const decipher = crypto.createDecipheriv(ALGORITHM, KEY, IV);
+    let out = decipher.update(hex, 'hex', 'utf8');
+    out += decipher.final('utf8');
+    return out;
+  } catch (e) {
+    console.warn(' Failed to decrypt:', hex);
+    return hex;
+  }
+}
+
+// CREATE
+router.post('/', auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
     const { name, amount, dueDate, billingCycle, notes, username, password } = req.body;
+    if (!name || !amount || !dueDate) return res.status(400).json({ message: 'Missing fields' });
 
-    if (!name || !amount || !dueDate)
-      return res.status(400).json({ message: "Name, amount, and due date are required" });
-
-    const encryptedUsername = username ? encrypt(username) : "";
-    const encryptedPassword = password ? encrypt(password) : "";
-
-    const newSub = new Subscription({
-      userId: req.user.id, 
+    const sub = new Subscription({
+      userId,
       name,
       amount,
-      dueDate,
-      billingCycle,
-      notes,
-      username: encryptedUsername,
-      password: encryptedPassword,
+      dueDate: new Date(dueDate),
+      billingCycle: billingCycle || 'monthly',
+      notes: notes || '',
+      username: username ? encrypt(username) : '',
+      password: password ? encrypt(password) : ''
     });
-
-    await newSub.save();
-    console.log(" Subscription saved:", newSub);
-
-    res.status(201).json({ message: "Subscription added successfully", subscription: newSub });
+    await sub.save();
+    res.status(201).json(sub);
   } catch (err) {
-    console.error(" Error adding subscription:", err);
-    res.status(500).json({ message: "Server error while adding subscription" });
+    console.error('POST /subscriptions error:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
-//  Get all subscriptions for logged-in user
-router.get("/", auth, async (req, res) => {
+// LIST (with decrypted creds)
+router.get('/', auth, async (req, res) => {
   try {
-    const subs = await Subscription.find({ userId: req.user.id });
-
-    const decryptedSubs = subs.map((sub) => ({
-      ...sub._doc,
-      username: sub.username ? decrypt(sub.username) : "",
-      password: sub.password ? decrypt(sub.password) : "",
+    const subs = await Subscription.find({ userId: req.user.id }).sort({ createdAt: -1 });
+    const mapped = subs.map(s => ({
+      ...s._doc,
+      username: s.username ? decrypt(s.username) : '',
+      password: s.password ? decrypt(s.password) : ''
     }));
-
-    res.json(decryptedSubs);
+    res.json(mapped);
   } catch (err) {
-    console.error(" Get subscriptions error:", err);
-    res.status(500).json({ message: "Error fetching subscriptions" });
+    console.error('GET /subscriptions error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// GET 
+router.get('/:id/credentials', auth, async (req, res) => {
+  try {
+    const sub = await Subscription.findOne({ _id: req.params.id, userId: req.user.id });
+    if (!sub) return res.status(404).json({ message: 'Not found' });
+    res.json({ username: sub.username ? decrypt(sub.username) : '', password: sub.password ? decrypt(sub.password) : '' });
+  } catch (err) {
+    console.error('GET /:id/credentials error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// DELETE
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const deleted = await Subscription.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
+    if (!deleted) return res.status(404).json({ message: 'Not found' });
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    console.error('DELETE /subscriptions error:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 

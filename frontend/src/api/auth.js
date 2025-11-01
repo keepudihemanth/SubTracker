@@ -9,6 +9,6 @@ export const login = async (email, password) => {
 
 export const register = async (name, email, password) => {
   const res = await axios.post(`${API_URL}/register`, { name, email, password });
-  alert('✅ Registration successful! Now login.');
+  alert(' Registration successful! Now login.');
   return res.data;
 };

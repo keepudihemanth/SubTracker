@@ -1,30 +1,18 @@
 import React from "react";
+import "../index.css";
 
-export default function Navbar({ onStartNow, goHome, goAbout, goAuth, user, onLogout }) {
+export default function Navbar({ onStartNow, goHome, goAbout, onLogout, isLoggedIn }) {
   return (
     <nav className="navbar">
-      <div className="logo">
-        <a href="/" onClick={(e) => { e.preventDefault(); goHome(); }}>
-          SubTracker
-        </a>
-      </div>
-
-      <ul>
-        <li>
-          <a href="#about" onClick={(e) => { e.preventDefault(); goAbout(); }}>
-            About
-          </a>
-        </li>
-      </ul>
-
-      {user ? (
-        <>
-          <button onClick={onStartNow}>Dashboard</button>
+      <h1 onClick={goHome}>SubTracker</h1>
+      <div className="nav-links">
+        <button onClick={goAbout}>About</button>
+        {isLoggedIn ? (
           <button onClick={onLogout}>Logout</button>
-        </>
-      ) : (
-        <button onClick={goAuth}>Login / Register</button>
-      )}
+        ) : (
+          <button onClick={onStartNow}>Login</button>
+        )}
+      </div>
     </nav>
   );
 }

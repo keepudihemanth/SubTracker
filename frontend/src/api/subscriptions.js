@@ -1,18 +1,47 @@
-import axios from 'axios';
+// src/api/subscriptions.js
+const API_BASE = "http://localhost:5000/api/subscriptions"; // adjust if backend runs elsewhere
 
-const API_URL = 'http://localhost:5000/api/subscriptions';
+//  Helper to get the token
+function getToken() {
+  return localStorage.getItem("token");
+}
 
-export const getSubscriptions = async () => {
-  const res = await axios.get(API_URL, { withCredentials: true });
-  return res.data;
-};
+//  Get all subscriptions for the logged-in user
+export async function getSubscriptions() {
+  const token = getToken();
+  const res = await fetch(API_BASE, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) throw new Error("Failed to fetch subscriptions");
+  return res.json();
+}
 
-export const createSubscription = async (sub) => {
-  const res = await axios.post(API_URL, sub, { withCredentials: true });
-  return res.data;
-};
+//  Add a new subscription
+export async function addSubscription(subData) {
+  const token = getToken();
+  const res = await fetch(API_BASE, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(subData),
+  });
+  if (!res.ok) throw new Error("Failed to add subscription");
+  return res.json();
+}
 
-export const deleteSubscription = async (id) => {
-  const res = await axios.delete(`${API_URL}/${id}`, { withCredentials: true });
-  return res.data;
-};
+//  Delete subscription
+export async function deleteSubscription(id) {
+  const token = getToken();
+  const res = await fetch(`${API_BASE}/${id}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  if (!res.ok) throw new Error("Failed to delete subscription");
+  return res.json();
+}

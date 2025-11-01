@@ -1,8 +1,8 @@
-// src/components/SubscriptionForm.jsx
 import React, { useState } from "react";
+import axios from "axios";
 
 export default function SubscriptionForm({ onAdd }) {
-  const [formData, setFormData] = useState({
+  const [form, setForm] = useState({
     name: "",
     amount: "",
     dueDate: "",
@@ -12,47 +12,22 @@ export default function SubscriptionForm({ onAdd }) {
     password: "",
   });
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  const token = localStorage.getItem("token");
+
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    const token = localStorage.getItem("token");
-    const user = JSON.parse(localStorage.getItem("user"));
-
-    if (!token || !user?._id) {
-      alert("❌ Please login before adding a subscription!");
-      return;
-    }
-
+    if (!token) return alert("Login required");
     try {
-      const res = await fetch("http://localhost:5000/api/subscriptions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          ...formData,
-          userId: user._id, // ✅ send userId to backend
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        console.error("❌ Add subscription error:", data);
-        alert(`❌ Failed to add subscription: ${data.message || "Unknown error"}`);
-        return;
-      }
-
-      alert("✅ Subscription added successfully!");
-      onAdd && onAdd(data);
-
-      // Reset form
-      setFormData({
+      const res = await axios.post(
+        "http://localhost:5000/api/subscriptions",
+        form,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      onAdd(res.data);
+      setForm({
         name: "",
         amount: "",
         dueDate: "",
@@ -62,74 +37,96 @@ export default function SubscriptionForm({ onAdd }) {
         password: "",
       });
     } catch (err) {
-      console.error("Network or server error:", err);
-      alert("⚠️ Could not connect to the backend server.");
+      console.error("Add subscription error:", err);
+      alert(err.response?.data?.message || "Failed to add subscription");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="subscription-form">
-      <h2>Add New Subscription</h2>
+    <div className="subscription-form-container">
+      <h2 className="form-title">Add New Subscription</h2>
+      <form className="subscription-form" onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label>Service Name</label>
+          <input
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            placeholder="e.g., Netflix, Spotify"
+            required
+          />
+        </div>
 
-      <input
-        type="text"
-        name="name"
-        placeholder="Service Name"
-        value={formData.name}
-        onChange={handleChange}
-        required
-      />
+        <div className="form-group">
+          <label>Amount</label>
+          <input
+            name="amount"
+            type="number"
+            value={form.amount}
+            onChange={handleChange}
+            placeholder="e.g., 299"
+            required
+          />
+        </div>
 
-      <input
-        type="number"
-        name="amount"
-        placeholder="Amount"
-        value={formData.amount}
-        onChange={handleChange}
-        required
-      />
+        <div className="form-group">
+          <label>Due Date</label>
+          <input
+            name="dueDate"
+            type="date"
+            value={form.dueDate}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
-      <input
-        type="date"
-        name="dueDate"
-        value={formData.dueDate}
-        onChange={handleChange}
-        required
-      />
+        <div className="form-group">
+          <label>Billing Cycle</label>
+          <select
+            name="billingCycle"
+            value={form.billingCycle}
+            onChange={handleChange}
+          >
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </div>
 
-      <select
-        name="billingCycle"
-        value={formData.billingCycle}
-        onChange={handleChange}
-      >
-        <option value="monthly">Monthly</option>
-        <option value="yearly">Yearly</option>
-      </select>
+        <div className="form-group">
+          <label>Username (optional)</label>
+          <input
+            name="username"
+            value={form.username}
+            onChange={handleChange}
+            placeholder="Enter login username"
+          />
+        </div>
 
-      <input
-        type="text"
-        name="username"
-        placeholder="Username (optional)"
-        value={formData.username}
-        onChange={handleChange}
-      />
+        <div className="form-group">
+          <label>Password (optional)</label>
+          <input
+            name="password"
+            type="password"
+            value={form.password}
+            onChange={handleChange}
+            placeholder="Enter login password"
+          />
+        </div>
 
-      <input
-        type="password"
-        name="password"
-        placeholder="Password (optional)"
-        value={formData.password}
-        onChange={handleChange}
-      />
+        <div className="form-group full-width">
+          <label>Notes (optional)</label>
+          <textarea
+            name="notes"
+            value={form.notes}
+            onChange={handleChange}
+            placeholder="Add any extra info..."
+          />
+        </div>
 
-      <textarea
-        name="notes"
-        placeholder="Notes"
-        value={formData.notes}
-        onChange={handleChange}
-      />
-
-      <button type="submit">Add Subscription</button>
-    </form>
+        <button type="submit" className="submit-btn">
+          + Add Subscription
+        </button>
+      </form>
+    </div>
   );
 }

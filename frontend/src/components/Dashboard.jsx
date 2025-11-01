@@ -1,81 +1,61 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import SubscriptionForm from "./SubscriptionForm";
 import SubscriptionList from "./SubscriptionList";
 
-export default function Dashboard() {
+export default function Dashboard({ user, onLogout }) {
   const [subscriptions, setSubscriptions] = useState([]);
   const [showForm, setShowForm] = useState(false);
-
   const token = localStorage.getItem("token");
 
-  // ✅ Fetch subscriptions on mount
   useEffect(() => {
-    if (!token) return;
+    if (!token) {
+      console.warn("No token found, redirecting to login.");
+      onLogout();
+      return;
+    }
 
     const fetchSubs = async () => {
       try {
         const res = await axios.get("http://localhost:5000/api/subscriptions", {
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.log("Fetched subscriptions:", res.data);
         setSubscriptions(res.data);
       } catch (err) {
-        console.error("Failed to fetch subscriptions", err);
+        console.error("Failed to fetch subscriptions:", err);
+        if (err.response && err.response.status === 401) {
+          alert("Session expired. Please login again.");
+          onLogout();
+        } else {
+          alert("Error fetching subscriptions. Please try again.");
+        }
       }
     };
+
     fetchSubs();
   }, [token]);
 
-  // ✅ Add subscription
-  const addSubscription = async (subData) => {
-    try {
-      const res = await axios.post("http://localhost:5000/api/subscriptions", subData, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setSubscriptions([...subscriptions, res.data]);
-      setShowForm(false);
-    } catch (err) {
-      console.error("Error adding subscription", err);
-    }
-  };
+  const addSubscription = (sub) => setSubscriptions([...subscriptions, sub]);
 
   return (
-    <div className="dashboard" id="dashboard">
-      <header style={heroStyle}>
-        <h1>Welcome to SubTrack</h1>
-        <p>Track all your subscriptions easily and never miss a payment.</p>
-        <button style={buttonStyle} onClick={() => setShowForm(true)}>Add Subscription</button>
+    <div className="dashboard">
+      <header className="dashboard-header">
+        <h2>Hello, <span>{user?.name || "User"}</span> 👋</h2>
+        <p className="dashboard-subtitle">Manage your subscriptions effortlessly</p>
       </header>
 
-      <SubscriptionList subscriptions={subscriptions} />
+      <div className="dashboard-controls">
+        <button
+          className={`toggle-btn ${showForm ? "close" : "add"}`}
+          onClick={() => setShowForm(!showForm)}
+        >
+          {showForm ? " Close Form" : "+ Add Subscription"}
+        </button>
+      </div>
 
-      {showForm && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <button className="modal-close" onClick={() => setShowForm(false)}>✖</button>
-            <SubscriptionForm addSubscription={addSubscription} />
-          </div>
-        </div>
-      )}
+      {showForm && <SubscriptionForm onAdd={addSubscription} />}
+      <SubscriptionList subscriptions={subscriptions} />
     </div>
   );
 }
-
-// Styles
-const heroStyle = {
-  textAlign: "center",
-  padding: "2rem 1rem",
-  background: "#f0f4f8",
-  borderRadius: "12px",
-  marginBottom: "2rem",
-};
-const buttonStyle = {
-  marginTop: "1rem",
-  padding: "0.8rem 1.8rem",
-  background: "#3498db",
-  color: "#fff",
-  border: "none",
-  borderRadius: "8px",
-  cursor: "pointer",
-  fontSize: "1rem",
-};

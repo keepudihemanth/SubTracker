@@ -3,3 +3,5 @@ node_modules
 package-lock.json
 package.json
 venv/
+test-mongo.js
+authRoutes.js

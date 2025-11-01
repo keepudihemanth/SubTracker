@@ -1,4 +1,4 @@
-// This is your UPDATED 'middleware/subscription.js' file
+
 
 const mongoose = require('mongoose');
 
@@ -10,13 +10,13 @@ const subscriptionSchema = new mongoose.Schema({
   notes: { type: String, required: false },
   active: { type: Boolean, default: true },
 
-  // --- UPDATED to match React/Routes ---
-  amount: { type: Number, required: true },  // Changed from 'price'
-  dueDate: { type: Date, required: true }, // Changed from 'nextDueDate'
+  // UPDATED 
+  amount: { type: Number, required: true },  
+  dueDate: { type: Date, required: true }, 
   
-  // --- ADDED for credentials ---
+  // ADDED for credentials 
   username: { type: String, required: false },
-  password: { type: String, required: false } // Will store the encrypted password
+  password: { type: String, required: false } 
   
 }, { timestamps: true });
 

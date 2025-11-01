@@ -1,106 +1,92 @@
-import { useEffect, useState } from 'react';
-// Make sure these imports are correct
-import { getSubscriptions, deleteSubscription } from '../api/subscriptions'; 
-import SubscriptionForm from './SubscriptionForm';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 export default function SubscriptionList() {
-  const [subscriptions, setSubscriptions] = useState([]);
-  const today = new Date();
+  const [list, setList] = useState([]);
+  const token = localStorage.getItem("token");
 
-  const fetchSubs = async () => {
-    try {
-      const data = await getSubscriptions();
-      // Add this log to see what you get from the DB
-      console.log("Fetched subscriptions:", data); 
-      setSubscriptions(data.map(s => ({ ...s, dueDate: new Date(s.dueDate) })));
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  const fetch = async () => {
+    if (!token) return;
+    try {
+      const res = await axios.get("http://localhost:5000/api/subscriptions", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setList(res.data);
+    } catch (err) {
+      console.error("Failed to fetch subscriptions", err);
+      alert(err.response?.data?.message || "Failed to fetch subscriptions");
+    }
+  };
 
-  useEffect(() => {
-    fetchSubs();
-  }, []);
+  useEffect(() => {
+    fetch();
+  }, []);
 
-  const handleAdded = (newSub) => {
-    // This 'newSub' comes from the POST response
-    console.log("Added new sub:", newSub);
-    setSubscriptions(prev => [newSub, ...prev]);
-  };
+  const viewCreds = async (id, name) => {
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/api/subscriptions/${id}/credentials`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert(
+        `Credentials for ${name}:\nUsername: ${
+          res.data.username || "N/A"
+        }\nPassword: ${res.data.password || "N/A"}`
+      );
+    } catch (err) {
+      console.error("Get creds error", err);
+      alert(err.response?.data?.message || "Failed to get credentials");
+    }
+  };
 
-  const handleDelete = async (id) => {
-    try {
-      await deleteSubscription(id);
-      setSubscriptions(prev => prev.filter(s => s._id !== id));
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  const remove = async (id) => {
+    if (!window.confirm("Delete subscription?")) return;
+    try {
+      await axios.delete(`http://localhost:5000/api/subscriptions/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setList(list.filter((s) => s._id !== id));
+    } catch (err) {
+      console.error("Delete error", err);
+      alert("Failed to delete");
+    }
+  };
 
-  // This is the function that calls your new backend route
-  const handleViewCredentials = async (sub) => {
-    try {
-      // Make sure this API path is correct
-      const res = await fetch(`/api/subscriptions/${sub._id}/credentials`);
-      
-      if (!res.ok) throw new Error('Failed to fetch credentials');
-      
-      const creds = await res.json(); 
+  return (
+    <div className="subscriptions-container">
+      <h2 className="subscriptions-title">Your Subscriptions</h2>
 
-      alert(
-        `Credentials for ${sub.name}:\n\n` +
-        `Username: ${creds.username || 'N/A'}\n` +
-        `Password: ${creds.password || 'N/A'}`
-      );
-    } catch (err) {
-      console.error(err);
-      alert('Could not retrieve credentials.');
-    }
-  };
-
-  return (
-    <section className="subscriptions">
-      <h2>Your Subscriptions</h2>
-      <SubscriptionForm onAdded={handleAdded} />
-
-      {subscriptions.length === 0 ? (
-        <p>No subscriptions added yet.</p>
-      ) : (
-        <div className="subscriptions-grid">
-          {subscriptions.map(s => {
-            const isDue = s.dueDate < today;
-            return (
-              <div key={s._id} className={`subscription-card ${isDue ? 'due' : ''}`}>
-                <div className="card-header">
-                  <div className="icon-circle">{s.name[0].toUpperCase()}</div>
-                  <div>
-                    <h3>{s.name}</h3>
-                    <span className="category">General</span>
-                  </div>
-                </div>
-                <div className="card-body">
-                  <p className="amount">${s.amount.toFixed(2)}</p>
-                  <p className="date">Next billing: {s.dueDate.toDateString()}</p>
-                  
-                  <p className={`status ${isDue ? 'overdue' : 'upcoming'}`}>
-                    {isDue ? 'Overdue' : 'Upcoming'}
-                  </p>
-                  <div className="card-actions">
-                    {/* --- THIS IS THE KEY ---
-                      This button only appears if s.username has a value */}
-                    {s.username && (
-                      <button className="view-creds-btn" onClick={() => handleViewCredentials(s)}>
-                        View Credentials
-                      </button>
-                    )}
-                    <button className="delete-btn" onClick={() => handleDelete(s._id)}>Delete</button>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </section>
-  );
+      {list.length === 0 ? (
+        <p className="empty-message">You don’t have any subscriptions yet.</p>
+      ) : (
+        <div className="subscriptions-grid">
+          {list.map((s) => (
+            <div key={s._id} className="subscription-card">
+              <div className="subscription-header">
+                <h3>{s.name}</h3>
+                <p className="amount">${Number(s.amount).toFixed(2)}</p>
+              </div>
+              <p className="due-date">
+                Next renewal:{" "}
+                <strong>{new Date(s.dueDate).toDateString()}</strong>
+              </p>
+              <div className="actions">
+                {s.username && (
+                  <button
+                    className="view-btn"
+                    onClick={() => viewCreds(s._id, s.name)}
+                  >
+                    View Credentials
+                  </button>
+                )}
+                <button className="delete-btn" onClick={() => remove(s._id)}>
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }

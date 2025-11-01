@@ -1,9 +1,8 @@
 import React from "react";
+import "../index.css";
 
 export default function Footer() {
   return (
-    <footer className="footer">
-      <p>© {new Date().getFullYear()} SubTracker. All rights reserved.</p>
-    </footer>
+    <footer>© {new Date().getFullYear()} SubTracker. All rights reserved.</footer>
   );
 }

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 import DashboardLanding from "./components/DashboardLanding";
@@ -9,50 +10,42 @@ import Login from "./components/Login";
 import Register from "./components/Register";
 
 export default function App() {
-  const [showTracker, setShowTracker] = useState(false);
-  const [showAbout, setShowAbout] = useState(false);
-  const [showLogin, setShowLogin] = useState(false);
-  const [showRegister, setShowRegister] = useState(false);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")) || null);
+  const navigate = useNavigate();
 
-  const handleLoginSuccess = (userData) => {
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token && !user) {
+      const savedUser = JSON.parse(localStorage.getItem("user"));
+      setUser(savedUser);
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setUser(null);
+    navigate("/login");
+  };
+
+  const onAuthSuccess = (userData, token) => {
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(userData));
     setUser(userData);
-    setShowTracker(true);
-    setShowLogin(false);
+    navigate("/dashboard");
   };
 
   return (
     <>
-      <Navbar
-        onStartNow={() => setShowLogin(true)}
-        goHome={() => { setShowTracker(false); setShowAbout(false); setShowLogin(false); setShowRegister(false); }}
-        goAbout={() => { setShowAbout(true); setShowTracker(false); setShowLogin(false); setShowRegister(false); }}
-      />
+      <Navbar onStartNow={() => navigate("/login")} goHome={() => navigate("/")} goAbout={() => navigate("/about")} onLogout={handleLogout} isLoggedIn={!!user} />
 
-      {!showTracker && !showAbout && !showLogin && !showRegister && (
-        <>
-          <Hero onStartNow={() => setShowLogin(true)} />
-          <DashboardLanding onStartNow={() => setShowLogin(true)} />
-        </>
-      )}
-
-      {showLogin && (
-        <Login
-          onLoginSuccess={handleLoginSuccess}
-          goToRegister={() => { setShowLogin(false); setShowRegister(true); }}
-        />
-      )}
-
-      {showRegister && (
-        <Register
-          goToLogin={() => { setShowRegister(false); setShowLogin(true); }}
-        />
-      )}
-
-      {showTracker && user && <Dashboard user={user} />}
-      {showAbout && <About />}
-
-      <Footer />
+      <Routes>
+        <Route path="/" element={<><Hero onStartNow={() => navigate("/login")} /><DashboardLanding onStartNow={() => navigate("/login")} /><Footer /></>} />
+        <Route path="/about" element={<About />} />
+        <Route path="/login" element={ user ? <Navigate to="/dashboard" /> : <Login onLoginSuccess={(u, t) => onAuthSuccess(u, t)} goToRegister={() => navigate('/register')} /> } />
+        <Route path="/register" element={ user ? <Navigate to="/dashboard" /> : <Register onRegisterSuccess={(u, t) => onAuthSuccess(u, t)} goToLogin={() => navigate('/login')} /> } />
+        <Route path="/dashboard" element={ user ? <Dashboard user={user} onLogout={handleLogout} /> : <Navigate to="/login" /> } />
+      </Routes>
     </>
   );
 }

@@ -1,49 +1,32 @@
 import React from "react";
 
 export default function DashboardLanding({ onStartNow }) {
-  const features = [
-    {
-      title: "All Subscriptions in One Place",
-      desc: "See all your active subscriptions at a glance and never miss one again.",
-    },
-    {
-      title: "Smart Reminders",
-      desc: "Get notified before payments are due so you’re always prepared.",
-    },
-    {
-      title: "Expense Insights",
-      desc: "Understand your monthly costs with a clear breakdown of expenses.",
-    },
-    {
-      title: "Stop Wasting Money",
-      desc: "Avoid forgotten or unused subscriptions that silently drain your wallet.",
-    },
-  ];
-
   return (
-    <section className="dashboard-landing" id="dashboard-landing">
-      <div className="dashboard-container">
-        {/* Heading */}
-        <h2 className="dashboard-heading">What is SubTracker ?</h2>
-        <p className="dashboard-subtext">
-          SubTracker gives you complete control of your subscriptions, bills, 
-          and spending habits — all from a simple and intuitive dashboard.
+    <section className="dashboard-landing">
+      <div className="content">
+        <h2>What is SubTracker?</h2>
+        <p className="subtitle">
+          Take control of your subscriptions effortlessly — smart reminders,
+          detailed insights, and everything in one place.
         </p>
 
-        {/* Feature Cards */}
-        <div className="dashboard-features">
-          {features.map((feature, index) => (
-            <div className="feature-card" key={index}>
-              <div className="feature-icon-placeholder"></div>
-              <h3>{feature.title}</h3>
-              <p>{feature.desc}</p>
-            </div>
-          ))}
+        <div className="features">
+          <div className="feature-card">
+            <h3> All in One Place</h3>
+            <p>View and manage all your active subscriptions from a single dashboard.</p>
+          </div>
+          <div className="feature-card">
+            <h3> Smart Reminders</h3>
+            <p>Get notified before payments are due — never miss a renewal again.</p>
+          </div>
+          <div className="feature-card">
+            <h3> Expense Insights</h3>
+            <p>Visualize your monthly spending and identify where your money goes.</p>
+          </div>
         </div>
 
-        {/* CTA */}
-        <button className="dashboard-btn" onClick={onStartNow}>
-          Start Tracking Now
+        <button onClick={onStartNow} className="cta-button">
+           Try Now
         </button>
       </div>
     </section>

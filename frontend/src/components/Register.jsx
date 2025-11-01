@@ -1,6 +1,7 @@
 import React, { useState } from "react";
+import axios from "axios";
 
-export default function Register({ goToLogin }) {
+export default function Register({ onRegisterSuccess, goToLogin }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -8,54 +9,62 @@ export default function Register({ goToLogin }) {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch("http://localhost:5000/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+      const res = await axios.post("http://localhost:5000/api/auth/register", {
+        name,
+        email,
+        password,
       });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        alert("✅ Registration successful. Now please login!");
-        goToLogin(); // redirect back to login page
-      } else {
-        alert(`❌ ${data.message}`);
-      }
+      localStorage.setItem("token", res.data.token);
+      localStorage.setItem("user", JSON.stringify(res.data.user));
+      onRegisterSuccess(res.data.user, res.data.token);
     } catch (err) {
-      alert("⚠️ Error connecting to backend. Check if server is running.");
-      console.error(err);
+      console.error("Register error:", err);
+      alert(err.response?.data?.message || "Registration failed");
     }
   };
 
   return (
-    <div className="auth-page">
-      <h2>Register</h2>
-      <form onSubmit={handleRegister}>
-        <input
-          type="text"
-          placeholder="Full Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-        />
-        <input
-          type="email"
-          placeholder="Email Address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Create Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit">Register</button>
-        <button type="button" onClick={goToLogin}>Back to Login</button>
-      </form>
+    <div className="register-page">
+      <div className="register-card">
+        <h2 className="register-title">Create Your Account </h2>
+        <p className="register-subtitle">
+          Start tracking your subscriptions in seconds
+        </p>
+
+        <form onSubmit={handleRegister} className="register-form">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Full Name"
+            required
+          />
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            placeholder="Email"
+            required
+          />
+          <input
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            type="password"
+            placeholder="Password"
+            required
+          />
+
+          <button type="submit" className="register-btn">
+            Register
+          </button>
+        </form>
+
+        <p className="register-footer">
+          Already have an account?{" "}
+          <button className="login-link" onClick={goToLogin}>
+            Login here
+          </button>
+        </p>
+      </div>
     </div>
   );
 }

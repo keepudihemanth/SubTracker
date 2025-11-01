@@ -16,13 +16,11 @@ export default function AuthPage({ onLoginSuccess, goHome }) {
     try {
       if (isLogin) {
         // Login flow
-        const user = await login(form.email, form.password); // this sets localStorage token inside api/auth
-        // api/auth returns user object (id, email, name)
+        const user = await login(form.email, form.password); 
         onLoginSuccess({ ...user, token: localStorage.getItem('token') });
       } else {
         // Register flow
-        const user = await register(form.name, form.email, form.password); // sets token
-        // Confirm registration to user and switch to login view:
+        const user = await register(form.name, form.email, form.password); 
         alert("Registration successful. Please login now.");
         setIsLogin(true);
         // optionally clear password

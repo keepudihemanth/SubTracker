@@ -1,21 +1,25 @@
 import React from "react";
-import heroImg from "../assets/hero-image.png"; 
+import "../index.css";
+import heroImage from "../assets/hero-img.png"; 
 
 export default function Hero({ onStartNow }) {
   return (
-    <section className="hero" id="hero">
-      <div className="hero-text">
+    <section
+      className="hero"
+      style={{
+        backgroundImage: `linear-gradient(rgba(40, 0, 70, 0.6), rgba(40, 0, 70, 0.6)), url(${heroImage})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      <div className="hero-content">
         <h1>Track all your subscriptions with ease</h1>
         <p>
-          Manage everything in one place. Get reminders before dues, and never
-          lose track of payments again.
+          Manage everything in one place. Get reminders before dues, and never lose
+          track of payments again.
         </p>
-        <div className="hero-actions">
-          <button onClick={onStartNow}>Start Now</button>
-        </div>
-      </div>
-      <div className="hero-image">
-        <img src={heroImg} alt="Subscriptions" />
+        <button onClick={onStartNow}>Get Started</button>
       </div>
     </section>
   );

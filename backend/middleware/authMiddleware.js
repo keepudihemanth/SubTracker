@@ -5,9 +5,9 @@ const crypto = require('crypto');
 const authMiddleware = require('../middleware/authMiddleware');
 
 // Encryption setup
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '12345678901234567890123456789012';
-const IV = process.env.IV || '1234567890123456';
-const ALGORITHM = 'aes-256-cbc';
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'ADD YOUR KEY HERE !!';
+const IV = process.env.IV || 'ADD YOUR IV HERE !!';
+const ALGORITHM = 'ADD YOUR ALGORITHM HERE !!';
 
 function encrypt(text) {
   const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY), Buffer.from(IV));
@@ -16,7 +16,7 @@ function encrypt(text) {
   return encrypted;
 }
 
-// 🔒 Protect this route
+//  Protect this route
 router.post('/', authMiddleware, async (req, res) => {
   try {
     const { name, amount, dueDate, billingCycle, notes, username, password } = req.body;
@@ -35,7 +35,7 @@ router.post('/', authMiddleware, async (req, res) => {
       notes,
       username: username || null,
       password: encryptedPassword,
-      user: req.user.id, // ✅ logged-in user ID from token
+      user: req.user.id, 
     });
 
     const saved = await sub.save();
