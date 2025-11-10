@@ -39,6 +39,20 @@ export default function SubscriptionList() {
     }
   };
 
+  const sendReminder = async (id, name) => {
+    try {
+      const res = await axios.post(
+        `http://localhost:5000/api/subscriptions/${id}/remind`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert(res.data.message || `Reminder sent for ${name}`);
+    } catch (err) {
+      console.error("Reminder error", err);
+      alert(err.response?.data?.message || "Failed to send reminder");
+    }
+  };
+
   const remove = async (id) => {
     if (!window.confirm("Delete subscription?")) return;
     try {
@@ -79,6 +93,12 @@ export default function SubscriptionList() {
                     View Credentials
                   </button>
                 )}
+                <button
+                  className="remind-btn"
+                  onClick={() => sendReminder(s._id, s.name)}
+                >
+                  Remind Me 📧
+                </button>
                 <button className="delete-btn" onClick={() => remove(s._id)}>
                   Delete
                 </button>
