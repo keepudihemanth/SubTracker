@@ -1,139 +1,197 @@
-# SubTracker
-This is a Cloud Computing project. 
+#  SubTracker — Smart Subscription Management App
 
-
-SubTracker is a web application for tracking subscriptions. It consists of a **frontend** and **backend**.
+SubTracker is a modern full-stack web application designed to help you manage, track, and analyze all your online subscriptions in one place. It provides reminders, insights, and expense management features to make subscription tracking effortless.
 
 ---
 
-## Directory Structure
+##  Features
 
-```bash
-SubTracker/
-├── backend/
-│   ├── controllers/
-│   ├── models/
-│   ├── routes/
-│   ├── utils/
-│   ├── config/
-│   ├── app.js        # Entry point for backend
-│   ├── package.json
-│   └── (other backend files)
-├── frontend/
-│   ├── public/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── services/
-│   │   ├── App.jsx or App.js
-│   │   ├── index.jsx or index.js
-│   ├── package.json
-│   └── (other frontend files)
-├── .gitignore
-├── README.md
-└── (any other root-level files)
+-  **User Authentication** – Secure login and signup using JWT.
+-  **Add / Edit / Delete Subscriptions** – Manage your services easily.
+-  **Expense Insights** – Track monthly and yearly spending.
+-  **Reminders** – View upcoming renewals and due dates.
+-  **Encrypted Credentials** – Optional secure storage for credentials.
+-  **Responsive UI** – Modern, clean, and works on all devices.
+
+---
+
+##  Tech Stack
+
+| Layer | Technology |
+|-------|-------------|
+| Frontend | React.js |
+| Backend | Node.js, Express.js |
+| Database | MongoDB (Mongoose) |
+| Auth | JWT (JSON Web Token) |
+| Styling | CSS |
+| HTTP Client | Axios |
+
+---
+
+##  Project Setup
+
+Follow the steps below to run SubTracker locally.
+
+### 1️⃣ Clone the Repository
+
+```
+
+git clone https://github.com/keepudihemanth/SubTracker.git
+cd SubTracker
+
 ```
 
 ---
 
-## Installation
+### 2️⃣ Install Dependencies
 
-### Prerequisites
+For backend:
+```
 
-* Node.js (v14 or newer recommended)
-* npm or yarn
-* (Optional) MongoDB or other database supported by backend
+cd backend
+npm install
 
-### Setup Steps
+```
 
-1. **Clone the repository**
+For frontend:
+```
 
-   ```sh
-   git clone https://github.com/keepudihemanth/SubTracker.git
-   cd SubTracker
-   ```
+cd frontend
+npm install
 
-2. **Backend setup**
-
-   ```sh
-   cd backend
-   npm install
-   ```
-
-   Create a `.env` file inside `backend/` and configure environment variables:
-
-   ```env
-   PORT=5000
-   DATABASE_URL=your_database_connection_string
-   JWT_SECRET=your_jwt_secret
-   ```
-
-3. **Frontend setup**
-
-   ```sh
-   cd frontend
-   npm install
-   ```
-
-   If needed, configure environment variables in `.env`:
-
-   ```env
-   REACT_APP_API_BASE_URL=http://localhost:5000
-   ```
+```
 
 ---
 
-## Running the Application
+### 3️⃣ Environment Variables
 
-* **Backend**
+Create a `.env` file inside the **backend** folder and add:
 
-  ```sh
-  cd backend
-  npm start
-  ```
+```
 
-  Or with nodemon (if configured):
+PORT=5000
+MONGO_URI=mongodb+srv://<username>:<password>@cluster.mongodb.net/subtracker
+JWT_SECRET=yourSuperSecretKey
 
-  ```sh
-  npm run dev
-  ```
+```
 
-* **Frontend**
+> REMEMBER: :**Do not commit `.env`** — keep it private.  
+> You can create `.env.example` for contributors:
 
-  ```sh
-  cd frontend
-  npm start
-  ```
+```
 
-* Frontend runs on: [http://localhost:3000](http://localhost:3000)  
-* Backend runs on: [http://localhost:5000](http://localhost:5000)
+PORT=
+MONGO_URI=
+JWT_SECRET=
+
+```
 
 ---
 
-## Usage
+### 4️⃣ Run the App
 
-1. Start both backend and frontend as shown above.
-2. Open [http://localhost:3000](http://localhost:3000) in your browser.
-3. Register or log in if authentication is enabled.
-4. Add, view, and manage subscriptions via the UI.
+Start the backend:
+```
 
----
+cd backend
+node server.jss
 
-## Project Scripts
+```
+The backend will run on `http://localhost:5000`
 
-* **npm start** — start application
-* **npm run dev** — development mode with hot reload
-* **npm test** — run tests (if available)
-* **npm run build** — build frontend for production
+Start the frontend:
+```
 
----
+cd ../frontend
+npm start
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Commit changes with clear commit messages
-4. Push to your fork and submit a pull request
+```
+The frontend will run on `http://localhost:5173`
 
 ---
 
+##  Folder Structure
+
+```bash
+
+SubTracker/
+├── backend/
+│   ├── server.js
+│   ├── routes/
+│   │   ├── auth.js
+│   │   └── subscription.js
+│   ├── models/
+│   │   ├── User.js
+│   │   └── Subscription.js
+│   ├── middleware/
+│   └── .env
+│
+└── frontend/
+├── src/
+│   ├── App.jsx
+│   ├── components/
+│   │   ├── Navbar.jsx
+│   │   ├── Hero.jsx
+│   │   ├── Dashboard.jsx
+│   │   ├── SubscriptionForm.jsx
+│   │   ├── SubscriptionList.jsx
+│   │   ├── Login.jsx
+│   │   ├── Register.jsx
+│   │   └── Footer.jsx
+│   ├── assets/
+│   │   └── hero-image.png
+│   └── index.css
+└── package.json
+
+```
+
+---
+
+##  Security Notes
+
+- Passwords are **hashed using bcrypt**.
+- Auth handled by **JWT tokens** stored in `localStorage`.
+- Sensitive keys (`MONGO_URI`, `JWT_SECRET`) stay in `.env`.
+- Never upload your `.env` or encryption keys to GitHub.
+
+---
+
+
+
+
+---
+
+##  How It Works
+
+1. Register or log in with your credentials.  
+2. Add subscription details — name, cost, renewal date, etc.  
+3. Dashboard shows all subscriptions, total expenses, and due reminders.  
+4. Data is stored securely in MongoDB.  
+5. You can edit or delete subscriptions anytime.
+
+
+---
+
+##  Troubleshooting
+
+| Issue | Fix |
+|--------|-----|
+| MongoDB connection error | Check `MONGO_URI` and whitelist your IP |
+| JWT error | Ensure correct `JWT_SECRET` in `.env` |
+| CORS issue | Enable `app.use(cors())` in backend |
+| Unauthorized requests | Add `Bearer <token>` in request headers |
+
+
+---
+
+##  Author
+
+**Hemanth**  
+Full Stack Developer & Creator of SubTracker  
+ 
+
+---
+
+##  Support
+
+If you find this project helpful, please give it a ⭐ on GitHub to support development!
