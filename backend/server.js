@@ -8,7 +8,9 @@ const authRoutes = require("./routes/auth");
 const subscriptionRoutes = require("./routes/subscriptions");
 
 const app = express();
+const dns = require("dns");
 
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
 const sendEmailReminder = require("./utils/mailer");
 const User = require("./models/User");
 const Subscription = require("./models/Subscriptions");
